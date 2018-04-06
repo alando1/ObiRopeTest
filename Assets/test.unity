@@ -406,6 +406,7 @@ MonoBehaviour:
   chutes:
   - {fileID: 0}
   - {fileID: 0}
+  windForce: 70
   ropeObject: {fileID: 0}
   material: {fileID: 2100000, guid: d5f6bff0d6c162a48a82c79888431b61, type: 2}
   container: {fileID: 1423435243}

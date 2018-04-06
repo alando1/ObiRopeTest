@@ -13,6 +13,7 @@ public class ExtractionRope : MonoBehaviour
 
     [Header("Extraction Chutes")]
     public GameObject[] chutes;
+    public float windForce;
 
     [Header("Extraction Rope")]
     public GameObject ropeObject;
@@ -22,15 +23,18 @@ public class ExtractionRope : MonoBehaviour
     [Header("Cargo Container")]
     public Transform container;
 
-    private bool refreshLoads, deploy, deployed, pullChute;
+    private Rigidbody rbParachute, rbChuteBag, rbCargo;
+    private bool refreshLoads, deploy, deployed, pullChute, payloadLaunched;
     private ObiCollider extractionCollider, cargoCollider, chuteObiCollider;
 
     // Use this for initialization
     void Start ()
     {
         refreshLoads = false;
+        deploy = false;
         deployed = false;
         pullChute = false;
+        payloadLaunched = false;
 	}
 	
 	// Update is called once per frame
@@ -39,10 +43,41 @@ public class ExtractionRope : MonoBehaviour
         HandleInput();
 
         if(deploy)
-            chutes[0].transform.position -= (20.0f * new Vector3(0, 0, 1) * Time.deltaTime);
+            if(rbChuteBag != null)
+                rbChuteBag.AddForce(new Vector3(0, 0, -windForce));
 
         if (pullChute)
-            chutes[1].transform.position -= (20.0f * new Vector3(0, 0, 1) * Time.deltaTime);
+        {
+            rbParachute.AddForce(new Vector3(0, 0, -windForce));
+            rbParachute.transform.position += (new Vector3(0, 1.0f, 0) * Time.deltaTime);
+        }
+
+        if(payloadLaunched)
+        {
+            rbCargo.AddForce(new Vector3(0, 0, -windForce * 0.5f));
+            //rbParachute.AddForce(new Vector3(0, 9.0f, 0.0f));
+        }
+
+        if ((payloads[0] != null) && deployed && (payloads[0].transform.position.z < -19.0f))
+        {
+            StartCoroutine(LaunchCargo());
+            deployed = false;
+            payloadLaunched = true;
+
+        }
+
+        if (chutes[1] != null && payloadLaunched)
+        {
+            if(payloads[0].transform.position.z <= chutes[1].transform.position.z)
+            {
+                payloadLaunched = false;
+                chutes[1].transform.eulerAngles = new Vector3(90.0f, 0, 0);
+                chutes[1].transform.parent = payloads[0].transform;
+                rbParachute.constraints = RigidbodyConstraints.FreezePositionX | RigidbodyConstraints.FreezeRotationY |
+                 RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezePositionZ | RigidbodyConstraints.FreezeRotationX;
+            }
+        }
+
     }
 
     void LoadObjects()
@@ -165,60 +200,96 @@ public class ExtractionRope : MonoBehaviour
 
     IEnumerator DeployExtractionChute()
     {
-        deploy = true;
         print("Deploy Extraction Chute");
-        chutes[1] = (GameObject)Instantiate(models[2]);
-        chutes[1].transform.parent = payloads[0].transform;
-        chutes[1].transform.position = chutes[0].transform.position;
-        chutes[1].transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+        //add force component to extraction bag
+        rbChuteBag = chutes[0].AddComponent<Rigidbody>();
+        rbChuteBag.useGravity = true;
+        rbChuteBag.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY;
+        deploy = true;
 
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.8f);
+
         pullChute = true;
-        BoxCollider chuteBoxCollider = chutes[1].AddComponent<BoxCollider>();
-        chuteBoxCollider.size = Vector3.zero;
-
-        chuteObiCollider = new ObiCollider();
-        chuteObiCollider = chutes[1].AddComponent<ObiCollider>();
-
         // remove the constraints from the solver, because we cannot modify the constraints list while the solver is using it.
+        //detach rope from extraction bag
         ObiPinConstraintBatch constraintsBatch = rope.PinConstraints.GetFirstBatch();
         rope.PinConstraints.RemoveFromSolver(null);
         constraintsBatch.RemoveConstraint(0);
         rope.PinConstraints.AddToSolver(null);
-        ////constraintsBatch.AddConstraint(0, chuteObiCollider, Vector3.zero, 0.0f);
-        ////  constraintsBatch.AddConstraint(rope.UsedParticles - 1, cargoCollider, Vector3.zero, 0.0f);
-        //rope.PinConstraints.AddToSolver(null);
-        //rope.PinConstraints.PushDataToSolver();
 
+        //create open parachute
+        chutes[1] = (GameObject)Instantiate(models[2]);
+        chutes[1].transform.parent = payloads[0].transform;
+        chutes[1].transform.position = chutes[0].transform.position - new Vector3(0.0f, 0.0f, 0.0f);
+        chutes[1].transform.localScale = new Vector3(0.1f, 0.1f, 0.1f);
+
+        //add box collider and obi collider components to parachute
+        BoxCollider chuteBoxCollider = chutes[1].AddComponent<BoxCollider>();
+        chuteBoxCollider.size = new Vector3(1.0f, 1.0f, 0.2f);
+        chuteBoxCollider.center = new Vector3(0, 0, -0.1f);
+        chuteObiCollider = new ObiCollider();
+        chuteObiCollider = chutes[1].AddComponent<ObiCollider>();
+
+        //attach rope to parachute
         constraintsBatch = rope.PinConstraints.GetFirstBatch();
         rope.PinConstraints.RemoveFromSolver(null);
-        constraintsBatch.AddConstraint(0, chuteObiCollider, Vector3.zero, 0.0f);
+        constraintsBatch.AddConstraint(0, chuteObiCollider, new Vector3(0,0,-0.1f), 0.0f);
         rope.PinConstraints.AddToSolver(null);
         rope.PinConstraints.PushDataToSolver();
 
+        //extraction bag falls after parachute is attached
+        rbChuteBag.useGravity = true;
+
+        rbParachute = chutes[1].AddComponent<Rigidbody>();
+        rbParachute.AddForce(0.0f, 0.0f, -10.0f);
+        rbParachute.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationY |
+                 RigidbodyConstraints.FreezePositionY;
 
         yield return new WaitForSeconds(1);
+
+        Destroy(chutes[0]);
+
+        rbParachute.constraints = RigidbodyConstraints.FreezePositionX| RigidbodyConstraints.FreezeRotationY |
+                 RigidbodyConstraints.FreezePositionY | RigidbodyConstraints.FreezePositionZ;
+
         deploy = false;
         deployed = true;
-
-        yield return new WaitForSeconds(0.2f);
         pullChute = false;
 
+        chutes[1].transform.parent = container;
+    }
+
+    IEnumerator LaunchCargo()
+    {
+        print("payload launched");
+        rbCargo = payloads[0].AddComponent<Rigidbody>();
+        rbCargo.useGravity = true;
+        rbCargo.constraints = RigidbodyConstraints.FreezeRotationY | RigidbodyConstraints.FreezeRotationZ;
+
+        yield return new WaitForSeconds(1);
+
+        //rbCargo.isKinematic = true;
     }
 
     void RemovePayloads()
     {
         print("Destroy Objects");
-        for (int i = 0; i < 8; i++)
-            if (payloads[i] != null)
-                Destroy(payloads[i]);
+        if(payloads != null)
+            for (int i = 0; i < 8; i++)
+                if (payloads[i] != null)
+                    Destroy(payloads[i]);
 
-        for (int i = 0; i < 2; i++)
-            if (chutes[i] != null)
-                Destroy(chutes[i]);
+        if(chutes != null)
+            for (int i = 0; i < 2; i++)
+                if (chutes[i] != null)
+                    Destroy(chutes[i]);
 
-        Destroy(ropeObject);
+        if(rope != null)
+            Destroy(ropeObject);
+
         deploy = false;
         pullChute = false;
+        deployed = false;
+        payloadLaunched = false;
     }
 }
