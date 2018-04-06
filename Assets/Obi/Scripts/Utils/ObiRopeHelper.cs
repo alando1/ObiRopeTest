@@ -34,15 +34,15 @@ public class ObiRopeHelper : MonoBehaviour {
     private ObiPinConstraintBatch constraintsBatch;
     private ObiDistanceConstraints distanceConstraints;
 
-    private Transform initialExtractionPos;
-    private Transform initialHeavyCargoPos;
+    private Vector3 initialExtractionPos;
+    private Vector3 initialHeavyCargoPos;
 
     void Start ()
     {
         deploy = false;
     
-        //initialHeavyCargoPos.position = new Vector3(0.0f, 0.0f, 0.5f);
-        //initialExtractionPos.position = new Vector3(0.0f, 0.0204f, -9.0f);
+        initialHeavyCargoPos = new Vector3(0.0f, 0.0f, 0.5f);
+        initialExtractionPos = new Vector3(0.0f, 0.0204f, -9.0f);
     }
 
     private void Update()
@@ -87,8 +87,8 @@ public class ObiRopeHelper : MonoBehaviour {
         extractionObject = (GameObject)Instantiate(models[0]);
         heavyCargoObject = (GameObject)Instantiate(models[1]);
 
-        extractionObject.transform.position = initialExtractionPos.position;
-        heavyCargoObject.transform.position = initialHeavyCargoPos.position;
+        extractionObject.transform.position = initialExtractionPos;
+        heavyCargoObject.transform.position = initialHeavyCargoPos;
 
         start = extractionObject.transform;
         end = heavyCargoObject.transform;

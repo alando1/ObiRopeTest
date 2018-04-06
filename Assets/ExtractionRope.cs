@@ -148,7 +148,7 @@ public class ExtractionRope : MonoBehaviour
         ObiSolver solver = ropeObject.GetComponent<ObiSolver>();
         rope = ropeObject.GetComponent<ObiRope>();
         ObiCatmullRomCurve path = ropeObject.GetComponent<ObiCatmullRomCurve>();
-        ObiRopeCursor cursor = ropeObject.GetComponent<ObiRopeCursor>();
+        //ObiRopeCursor cursor = ropeObject.GetComponent<ObiRopeCursor>();
 
         // set up component references
         rope.Solver = solver;
