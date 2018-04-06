@@ -177,13 +177,14 @@ public class ExtractionRope : MonoBehaviour
         yield return rope.StartCoroutine(rope.GeneratePhysicRepresentationForMesh());
         rope.AddToSolver(null);
 
-        extractionCollider = new ObiCollider();
-        cargoCollider = new ObiCollider();
+        //extractionCollider = new ObiCollider();
+        //cargoCollider = new ObiCollider();
 
         BoxCollider extractionBox = chutes[0].AddComponent<BoxCollider>();
         extractionBox.size = Vector3.zero;
         BoxCollider cargoBox = payloads[0].AddComponent<BoxCollider>();
-        cargoBox.center = new Vector3(0.0f, 0.5f, 0.0f);
+        cargoBox.center = new Vector3(0.0f, 0.25f, 0.0f);
+        cargoBox.size = new Vector3(0.5f, 0.5f, 0.5f);
 
         extractionCollider = chutes[0].AddComponent<ObiCollider>();
         cargoCollider = payloads[0].AddComponent<ObiCollider>();
@@ -192,7 +193,7 @@ public class ExtractionRope : MonoBehaviour
         rope.PinConstraints.RemoveFromSolver(null);
         ObiPinConstraintBatch constraintsBatch = rope.PinConstraints.GetFirstBatch();            
         constraintsBatch.AddConstraint(0, extractionCollider, Vector3.zero, 0.0f);
-        constraintsBatch.AddConstraint(rope.UsedParticles - 1, cargoCollider, Vector3.zero, 0.0f);
+        constraintsBatch.AddConstraint(rope.UsedParticles - 1, cargoCollider, new Vector3(0, 0.5f, -0.25f), 0.0f);
         rope.PinConstraints.AddToSolver(null);
         rope.PinConstraints.PushDataToSolver();
 
@@ -227,7 +228,8 @@ public class ExtractionRope : MonoBehaviour
         BoxCollider chuteBoxCollider = chutes[1].AddComponent<BoxCollider>();
         chuteBoxCollider.size = new Vector3(1.0f, 1.0f, 0.2f);
         chuteBoxCollider.center = new Vector3(0, 0, -0.1f);
-        chuteObiCollider = new ObiCollider();
+
+        //chuteObiCollider = new ObiCollider();
         chuteObiCollider = chutes[1].AddComponent<ObiCollider>();
 
         //attach rope to parachute

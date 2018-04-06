@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
-  m_IndirectSpecularColor: {r: 0.44657868, g: 0.49641263, b: 0.57481706, a: 1}
+  m_IndirectSpecularColor: {r: 0.44657898, g: 0.4964133, b: 0.5748178, a: 1}
 --- !u!157 &3
 LightmapSettings:
   m_ObjectHideFlags: 0
@@ -406,7 +406,7 @@ MonoBehaviour:
   chutes:
   - {fileID: 0}
   - {fileID: 0}
-  windForce: 70
+  windForce: 50
   ropeObject: {fileID: 0}
   material: {fileID: 2100000, guid: d5f6bff0d6c162a48a82c79888431b61, type: 2}
   container: {fileID: 1423435243}
